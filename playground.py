@@ -2,7 +2,7 @@ from RevenueMaker import RevenueMakerClass
 import pandas as pd
 
 
-revenue = RevenueMakerClass(include_support_cost=True,
+revenue = RevenueMakerClass(include_support_cost=False,
                             filter_by_year=False,
                             switch_product_group=False,
                             column1='',
