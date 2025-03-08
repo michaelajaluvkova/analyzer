@@ -8,69 +8,63 @@ import matplotlib
 from adjustText import adjust_text
 matplotlib.use('TkAgg')
 
-
-def adjust_annotations(ax, x_data, y_data, labels):
-    from adjustText import adjust_text
-
+def adjust_annotations(ax, x_data, y_data, labels, ukraine=None):
     annotations = []
-    special_labels = {
-        'P38': (5, -5),  
-        'P9': (5, -5) }
+    if ukraine==False:
+        special_labels = {
+            'P38': (5, -5),
+            'P9': (5, -5) }
 
-    for i, label in enumerate(labels):
-        if label in participants_to_highlight:
-            if label not in special_labels:
-                annotations.append(
-                    ax.text(x_data.iloc[i], y_data.iloc[i], label, fontsize=10,
-                            bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
-                                      facecolor="white", alpha=0.5), zorder=2))
-    adjust_text(annotations, ax=ax, arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
+        for i, label in enumerate(labels):
+            if label in participants_to_highlight:
+                if label not in special_labels:
+                    annotations.append(
+                        ax.text(x_data.iloc[i], y_data.iloc[i], label, fontsize=10,
+                                bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
+                                          facecolor="white", alpha=0.5), zorder=2))
+        adjust_text(annotations, ax=ax, arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
 
-    # special labels
-    for special_label, offset in special_labels.items():
-        if special_label in labels.values:
-            special_indices = labels[labels == special_label].index
-            for idx in special_indices:
-                x_special = x_data.iloc[idx]
-                y_special = y_data.iloc[idx]
-                ax.annotate(special_label, (x_special, y_special),
-                            textcoords="offset points", xytext=offset,  # Custom offset
-                            ha='left', va='top', fontsize=10,
-                            bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
-                                      facecolor="white", alpha=0.5),
-                            arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
+        # special labels
+        for special_label, offset in special_labels.items():
+            if special_label in labels.values:
+                special_indices = labels[labels == special_label].index
+                for idx in special_indices:
+                    x_special = x_data.iloc[idx]
+                    y_special = y_data.iloc[idx]
+                    ax.annotate(special_label, (x_special, y_special),
+                                textcoords="offset points", xytext=offset,  # Custom offset
+                                ha='left', va='top', fontsize=10,
+                                bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
+                                          facecolor="white", alpha=0.5),
+                                arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
+    else:
+        special_labels = {
+            'P38': (5, -5)}
 
-def adjust_annotations_ukraine(ax, x_data, y_data, labels):
-    from adjustText import adjust_text
+        for i, label in enumerate(labels):
+            if label in participants_to_highlight:
+                if label not in special_labels:
+                    annotations.append(
+                        ax.text(x_data[i], y_data[i], label, fontsize=10,
+                                bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
+                                          facecolor="white", alpha=0.5), zorder=2)
+                    )
 
-    annotations = []
-    special_labels = {
-        'P38': (5, -5)}
+        adjust_text(annotations, ax=ax, arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
 
-    for i, label in enumerate(labels):
-        if label in participants_to_highlight:
-            if label not in special_labels:
-                annotations.append(
-                    ax.text(x_data[i], y_data[i], label, fontsize=10,
-                            bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
-                                      facecolor="white", alpha=0.5), zorder=2)
-                )
-
-    adjust_text(annotations, ax=ax, arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
-
-    # special labels
-    for special_label, offset in special_labels.items():
-        if special_label in labels.values:
-            special_indices = labels[labels == special_label].index
-            for idx in special_indices:
-                x_special = x_data.iloc[idx]
-                y_special = y_data.iloc[idx]
-                ax.annotate(special_label, (x_special, y_special),
-                            textcoords="offset points", xytext=offset,  # Custom offset
-                            ha='left', va='top', fontsize=10,
-                            bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
-                                      facecolor="white", alpha=0.5),
-                            arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
+        # special labels
+        for special_label, offset in special_labels.items():
+            if special_label in labels.values:
+                special_indices = labels[labels == special_label].index
+                for idx in special_indices:
+                    x_special = x_data.iloc[idx]
+                    y_special = y_data.iloc[idx]
+                    ax.annotate(special_label, (x_special, y_special),
+                                textcoords="offset points", xytext=offset,  # Custom offset
+                                ha='left', va='top', fontsize=10,
+                                bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
+                                          facecolor="white", alpha=0.5),
+                                arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
 
 
 # Loading datasets
@@ -276,7 +270,7 @@ sociality4 = data_data['sociality_label']
 
 plt.figure(figsize=(12, 6))
 ax = sns.scatterplot(x=x5, y=y5, hue=sociality4, palette=palette_full, style=sociality4, s=100, hue_order=legend_order, style_order=legend_order, zorder=1)
-adjust_annotations_ukraine(ax, x5, y5, data_data['kod'])
+adjust_annotations(ax, x5, y5, data_data['kod'], ukraine=True)
 
 # quadratic regression
 z5 = np.polyfit(x5, y5, 2)
