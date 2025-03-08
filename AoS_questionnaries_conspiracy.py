@@ -9,22 +9,24 @@ from adjustText import adjust_text
 matplotlib.use('TkAgg')
 
 
-# Function to automatically adjust annotations to avoid overlap
 def adjust_annotations(ax, x_data, y_data, labels):
+    from adjustText import adjust_text
 
     annotations = []
     special_labels = {
-        'P38': (5, -5),
-        'P9': (5, -5)}
+        'P38': (5, -5),  
+        'P9': (5, -5) }
+
     for i, label in enumerate(labels):
         if label in participants_to_highlight:
             if label not in special_labels:
                 annotations.append(
-                    ax.text(x_data[i], y_data[i], label, fontsize=10,
+                    ax.text(x_data.iloc[i], y_data.iloc[i], label, fontsize=10,
                             bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
                                       facecolor="white", alpha=0.5), zorder=2))
-
     adjust_text(annotations, ax=ax, arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
+
+    # special labels
     for special_label, offset in special_labels.items():
         if special_label in labels.values:
             special_indices = labels[labels == special_label].index
@@ -39,9 +41,12 @@ def adjust_annotations(ax, x_data, y_data, labels):
                             arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
 
 def adjust_annotations_ukraine(ax, x_data, y_data, labels):
+    from adjustText import adjust_text
+
     annotations = []
     special_labels = {
         'P38': (5, -5)}
+
     for i, label in enumerate(labels):
         if label in participants_to_highlight:
             if label not in special_labels:
@@ -50,7 +55,10 @@ def adjust_annotations_ukraine(ax, x_data, y_data, labels):
                             bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
                                       facecolor="white", alpha=0.5), zorder=2)
                 )
+
     adjust_text(annotations, ax=ax, arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
+
+    # special labels
     for special_label, offset in special_labels.items():
         if special_label in labels.values:
             special_indices = labels[labels == special_label].index
@@ -65,17 +73,15 @@ def adjust_annotations_ukraine(ax, x_data, y_data, labels):
                             arrowprops=dict(arrowstyle="->", color='gray', alpha=0.5))
 
 
-# Load data from Excel files
-graph1_data = pd.read_excel('')
-data_data = pd.read_excel('')
-participants_to_label = ['P1', 'P2', 'P3', 'P7', 'P8', 'P9', 'P10', 'P11', 'P12', 'P13', 'P14', 'P15', 'P17', 'P18', 'P19', 'P20', 'P22', 'P23']
-filtered_graph1_data = graph1_data[graph1_data['kod'].isin(participants_to_label)]
+# Loading datasets
+graph1_data = pd.read_csv('import_covid_minus.csv', decimal=',')
+data_data = pd.read_excel('data_2024.xlsx')
+print(data_data.columns)
+participants_to_highlight = ['P1', 'P2', 'P3', 'P7', 'P8', 'P9', 'P10', 'P11', 'P12', 'P13', 'P14', 'P15', 'P17', 'P18', 'P19', 'P20', 'P22', 'P30']
+filtered_graph1_data = graph1_data[graph1_data['kod'].isin(participants_to_highlight)]
+data_data['intensity_reversed'] = 1 - data_data['intensity'] #reversing variable
 
-# Reverse intensity variable
-data_data['intensity_reversed'] = 1 - data_data['intensity']
-graph1_data['skepticism'] = (graph1_data['skepticism'] - 2)
-
-# Set colors for sociality variable
+# setting palletes
 palette_full = {0: 'red', 1: 'gray', 2: 'blue', 3: 'black', 4: 'green'}
 graph1_data['Sociality'] = graph1_data['Sociality'].replace({1: 0, 2: 1, 3: 2, 4: 3})
 data_data['sociality'] = data_data['sociality'].replace({4: 3})
@@ -85,59 +91,70 @@ palette_full = {
     'low sociality': 'red',
     'medium sociality': 'gray',
     'developed sociality': 'blue',
-    'undetermined': 'black'
-}
+    'undetermined': 'black'}
 legend_order = ['low sociality', 'medium sociality', 'developed sociality', 'undetermined']
 
 # === GRAPH 1 ( Study 1)  ===
 print(graph1_data['Sociality'].unique())
-x1 = graph1_data['skepticism']
-y1 = graph1_data['complexity']
+x1 = pd.to_numeric(graph1_data['skepticism_novy'], errors='coerce')
+y1 = pd.to_numeric(graph1_data['complexity'], errors='coerce')
+
+
 sociality1 = graph1_data['sociality_label']
 legend_order_1 = ['low sociality', 'medium sociality', 'developed sociality']
 
 plt.figure(figsize=(12, 6))
 ax = sns.scatterplot(x=x1, y=y1, hue=sociality1, palette=palette_full, style=sociality1, s=100, hue_order=legend_order_1, style_order=legend_order_1, zorder=1)
 
-# Fit and plot quadratic regression line for Graph 1
+# quadratic regression
 z1 = np.polyfit(x1, y1, 2)
 p1 = np.poly1d(z1)
-x_smooth = np.linspace(np.min(x1), np.max(x1), 300)
-y_smooth = p1(x_smooth)
+x_smooth = np.linspace(np.min(x1), np.max(x1), 300)  # smoothening
+y_smooth = p1(x_smooth)  
 
-plt.plot(x_smooth, y_smooth, color='black') #smoother
+plt.plot(x_smooth, y_smooth, color='black') #se zahlazenim
+
+data_data['kod'] = data_data['kod'].reset_index(drop=True)
 
 for i in range(len(filtered_graph1_data)):
     participant_code = filtered_graph1_data.iloc[i]['kod']
-    x_pos = filtered_graph1_data.iloc[i]['skepticism']
-    y_pos = filtered_graph1_data.iloc[i]['complexity']
+    x_pos = pd.to_numeric(filtered_graph1_data.iloc[i]['skepticism_novy'])
+    y_pos = pd.to_numeric(filtered_graph1_data.iloc[i]['complexity'])
 
-    # Custom offset for P8 to position it precisely between P3 and P13
+    # Custom offset for overlapping participants
     if participant_code == 'P8':
-        plt.annotate(participant_code, (x_pos + 0.5, y_pos),
-                     textcoords="offset points", xytext=(0, -7),
+        plt.annotate(participant_code, (x_pos, y_pos - 0.015),  # Move P8 below P19
+                     textcoords="offset points", xytext=(0, -15),  # Offset down
                      ha='center', fontsize=9,
-                     bbox=dict(boxstyle="round,pad=0.3", edgecolor="black",
-                               facecolor="white", alpha=0.5))
+                     bbox=dict(boxstyle="round,pad=0.2", edgecolor="red",
+                               facecolor="white", alpha=0.5))  # Transparent bbox
+
     if participant_code == 'P13':
-        plt.annotate(participant_code, (x_pos, y_pos - 0.005),
+        plt.annotate(participant_code, (x_pos, y_pos - 0.005),  # Move P13 slightly down
                      textcoords="offset points", xytext=(0, -10),
                      ha='center', fontsize=9,
-                     bbox=dict(boxstyle="round,pad=0.3", edgecolor="black",
-                               facecolor="white", alpha=0.5))
-    if participant_code == 'P19':
-        plt.annotate(participant_code, (x_pos, y_pos - 0.005),
-                     textcoords="offset points", xytext=(0, 15),
-                     ha='center', fontsize=9,
-                     bbox=dict(boxstyle="round,pad=0.3", edgecolor="black",
-                               facecolor="white", alpha=0.5))
-    if participant_code not in ['P8', 'P13', 'P19']:
-        plt.annotate(participant_code, (x_pos, y_pos), textcoords="offset points", xytext=(10, 10),
-                     ha='center', fontsize=9,
-                     bbox=dict(boxstyle="round,pad=0.3", edgecolor="black",
+                     bbox=dict(boxstyle="round,pad=0.3", edgecolor="red",
                                facecolor="white", alpha=0.5))
 
-# Remove title
+    if participant_code == 'P19':
+        plt.annotate(participant_code, (x_pos, y_pos),  # Keep P19 at its position
+                     textcoords="offset points", xytext=(0, 10),  # Move up slightly
+                     ha='center', fontsize=9,
+                     bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",  # Smaller box
+                               facecolor="white", alpha=0.5))
+
+    if participant_code == 'P3':
+        plt.annotate(participant_code, (x_pos, y_pos), textcoords="offset points", xytext=(0, 0),
+                     ha='center', fontsize=9,
+                     bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
+                               facecolor="white", alpha=0.5, zorder=2))
+
+    if participant_code not in ['P3', 'P8', 'P13', 'P19']:
+        plt.annotate(participant_code, (x_pos, y_pos), textcoords="offset points", xytext=(0, 0),
+                     ha='left', va='top', fontsize=9,
+                     bbox=dict(boxstyle="round,pad=0.15", edgecolor="red",
+                               facecolor="white", alpha=0.5, zorder=2))
+
 plt.xlabel('Conspiracy mentality questionnaire')
 plt.gcf().text(0.5, 0.03, '(CMQ)', ha='center', va='top', fontsize=10)
 plt.ylabel('Complexity')
@@ -147,8 +164,8 @@ plt.savefig('study1.jpg', format='jpg', dpi=400)
 plt.show()
 
 
-##### Start of Graphs for Study 2
-participants_to_highlight = ['P1', 'P5', 'P6', 'P9', 'P10', 'P11', 'P12', 'P15', 'P16', 'P17', 'P18', 'P20', 'P22', 'P23', 'P26', 'P31', 'P32', 'P51', 'P52']
+##### Graphs for Study 2 ####
+participants_to_highlight = ['P1', 'P5', 'P6', 'P9', 'P10', 'P11', 'P12', 'P15', 'P16', 'P17', 'P18', 'P20', 'P22', 'P23', 'P26', 'P30', 'P31', 'P32', 'P51', 'P52']
 sociality_labels = {0: 'low sociality', 1: 'medium sociality', 2: 'developed sociality', 3: 'undetermined'}
 data_data['sociality_label'] = data_data['sociality'].map(sociality_labels)
 
@@ -165,23 +182,17 @@ ax = sns.scatterplot(x=x2, y=y2, hue=sociality2, palette=palette_full, style=soc
 
 adjust_annotations(ax, x2, y2, data_data['kod'])
 
+# quadrattic regression
 z2 = np.polyfit(x2, y2, 2)
 p2 = np.poly1d(z2)
 plt.plot(np.sort(x2), p2(np.sort(x2)), color='black')
 
 plt.xlabel('Conspiracy mentality questionnaire (CMQ)')
-#plt.gcf().text(0.5, 0.03, '(CMQ)', ha='left', va='top', fontsize=10)
 plt.ylabel('Complexity')
-#plt.legend(title='Sociality')
-plt.legend(
-    title='Sociality',
-    loc='center left',
-    bbox_to_anchor=(1.05, 0.5),
-    borderaxespad=0
-)
-
+plt.legend(title='Sociality', bbox_to_anchor=(1.21, 1),)
+plt.subplots_adjust(right=0.8)
 plt.grid(True)
-plt.tight_layout(rect=[0, 0, 0.85, 1])
+#plt.tight_layout(rect=[0, 0, 0.85, 1])
 plt.savefig('study2_CMQ.jpg', format='jpg', dpi=400)
 plt.show()
 
@@ -190,18 +201,18 @@ x3 = data_data['conspiracy_general']
 y3 = data_data['intensity_reversed']
 sociality3 = data_data['sociality_label']
 
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(12, 6))
 ax = sns.scatterplot(x=x3, y=y3, hue=sociality3, palette=palette_full, style=sociality3, s=100, hue_order=legend_order, style_order=legend_order, zorder=1)
 
 adjust_annotations(ax, x3, y3, data_data['kod'])
 
 
-# Fit and plot quadratic regression line for Graph 3
+# quadratic regression
 z3 = np.polyfit(x3, y3, 2)
 p3 = np.poly1d(z3)
 plt.plot(np.sort(x3), p3(np.sort(x3)), color='black')
 
-# Remove title
+
 plt.xlabel('General conspiracy beliefs')
 plt.gcf().text(0.5, 0.03, '(GCB)', ha='center', va='top', fontsize=10)
 plt.ylabel('Complexity')
@@ -213,12 +224,13 @@ plt.show()
 # === Model Statistics for Graph 1 ===
 y1_pred = p1(x1)
 r_squared_1 = r2_score(y1, y1_pred)
-n = len(y1)
-k = 2
-rss = np.sum((y1 - y1_pred) ** 2)
-tss = np.sum((y1 - np.mean(y1)) ** 2)
-f_statistic = (tss - rss) / (rss / (n - k - 1))
-p_value = stats.f.sf(f_statistic, k, n - k - 1)
+
+n = len(y1)  
+k = 2 
+rss = np.sum((y1 - y1_pred) ** 2)  
+tss = np.sum((y1 - np.mean(y1)) ** 2)  
+f_statistic = (tss - rss) / (rss / (n - k - 1))  
+p_value = stats.f.sf(f_statistic, k, n - k - 1)  
 
 print("First graph COVID study")
 print(f"The overall model was not significant, F({k-1}, {n-k-1}) = {f_statistic:.4f}, p = {p_value:.4f}, "
@@ -241,17 +253,15 @@ print(f"The overall model was not significant, F({k2-1}, {n2-k2-1}) = {f_statist
 print(f"Complexity = {z2[0]:.4f} * (CMQ)^2 + {z2[1]:.4f} * (CMQ) + {z2[2]:.4f}")
 
 # === Model Statistics for Graph 3 ===
-y3_pred = p3(x3)
-
+y3_pred = p3(x3)  
 r_squared_3 = r2_score(y3, y3_pred)
 
-# Calculate F-statistic and p-value for Graph 3
-n3 = len(y3)
-k3 = 2
-rss3 = np.sum((y3 - y3_pred) ** 2)
-tss3 = np.sum((y3 - np.mean(y3)) ** 2)
-f_statistic3 = (tss3 - rss3) / (rss3 / (n3 - k3 - 1))
-p_value3 = stats.f.sf(f_statistic3, k3, n3 - k3 - 1)
+n3 = len(y3) 
+k3 = 2 
+rss3 = np.sum((y3 - y3_pred) ** 2) 
+tss3 = np.sum((y3 - np.mean(y3)) ** 2) 
+f_statistic3 = (tss3 - rss3) / (rss3 / (n3 - k3 - 1))  
+p_value3 = stats.f.sf(f_statistic3, k3, n3 - k3 - 1) 
 
 print("Graph 3 General conspiracy beliefs")
 print(f"The overall model was not significant, F({k3-1}, {n3-k3-1}) = {f_statistic3:.4f}, p = {p_value3:.4f}, "
@@ -264,29 +274,26 @@ x5 = data_data['conspiracy_UA']
 y5 = data_data['intensity_reversed']
 sociality4 = data_data['sociality_label']
 
-plt.figure(figsize=(14, 6))
+plt.figure(figsize=(12, 6))
 ax = sns.scatterplot(x=x5, y=y5, hue=sociality4, palette=palette_full, style=sociality4, s=100, hue_order=legend_order, style_order=legend_order, zorder=1)
 adjust_annotations_ukraine(ax, x5, y5, data_data['kod'])
 
+# quadratic regression
 z5 = np.polyfit(x5, y5, 2)
 p5 = np.poly1d(z5)
 plt.plot(np.sort(x5), p3(np.sort(x5)), color='black')
-plt.xlabel('Ukraine conspiracy beliefs')
-plt.gcf().text(0.5, 0.03, '(UCB)', ha='center', va='top', fontsize=10)
+
+plt.xlabel('Ukraine conspiracy beliefs (UCB)')
 plt.ylabel('Complexity')
-plt.legend(
-    title='Sociality',
-    loc='center left',
-    bbox_to_anchor=(1.05, 0.5),
-    borderaxespad=0)
+plt.legend(title='Sociality')
 plt.grid(True)
-plt.tight_layout(rect=[0, 0, 0.85, 1])
+#plt.tight_layout(rect=[0, 0, 0.85, 1])
 plt.savefig('study2_UCB.jpg', format='jpg', dpi=400)
 plt.show()
 
+##### Statistics
 z_UA = np.polyfit(x5, y5, 2)
 p_UA = np.poly1d(z5)
-
 y_UA_pred = p_UA(x5)
 r_squared_UA = r2_score(y5, y_UA_pred)
 
