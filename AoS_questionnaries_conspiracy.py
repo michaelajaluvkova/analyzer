@@ -88,7 +88,7 @@ def plot_quadratic_regression(x, y, labels, hue=None, hue_order=None, palette=No
     return {"r_squared": r_squared, "f_stat": f_stat, "p_value": p_val, "coefficients": z}
 
 # === DATA PREP ===
-graph1_data = pd.read_csv('import_covid_minus.csv', decimal=',')
+graph1_data = pd.read_csv('covid_data_study_1.csv', decimal=',')
 data_data = pd.read_excel('data_2024.xlsx')
 participants_to_highlight = ['P1', 'P2', 'P3', 'P7', 'P8', 'P9', 'P10', 'P11', 'P12', 'P13', 'P14', 'P15', 'P17', 'P18', 'P19', 'P20', 'P22', 'P30']
 filtered_graph1_data = graph1_data[graph1_data['kod'].isin(participants_to_highlight)]
