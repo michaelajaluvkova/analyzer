@@ -1,4 +1,4 @@
-# Project Repository
+# analyzer project repository
 
 ## Description
 
